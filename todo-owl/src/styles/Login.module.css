@@ -1,0 +1,134 @@
+.container {
+  width: 400px;
+  padding: 30px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 15px;
+  position: relative;
+  overflow: hidden;
+  background-color: white;
+}
+
+.formWrapper {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.6s ease;
+  text-align: center;
+}
+
+.title {
+  margin-bottom: 20px;
+  color: #333;
+  font-weight: bold;
+  font-size: 24px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.input {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.input:focus {
+  border-color: #ff8c42;
+  outline: none;
+}
+
+.button {
+  width: 100%;
+  max-width: 300px;
+  padding: 12px 25px;
+  background-color: #ff8c42;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.button:hover {
+  background-color: #e07a37;
+  transform: translateY(-2px);
+}
+
+.text {
+  margin-top: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.toggleLabel {
+  color: #ff8c42;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.toggleLabel:hover {
+  color: #e07a37;
+}
+
+.registerFormContainer,
+.loginFormContainer {
+  display: flex;
+  transition: transform 0.6s ease;
+}
+
+.loginFormContainer {
+  z-index: 1;
+}
+
+.toggleCheckbox {
+  display: none;
+}
+
+.body {
+  font-family: "Arial", sans-serif;
+  background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hidden {
+  display: none;
+}
+
+:global(body.dark-mode) {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: 90%;
+    padding: 20px;
+  }
+  .title {
+    font-size: 20px;
+  }
+  .input,
+  .button {
+    font-size: 14px;
+  }
+  .button {
+    padding: 10px 20px;
+  }
+}

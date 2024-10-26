@@ -1,0 +1,218 @@
+/* Styles for settings */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f7f8fc;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+}
+.navbar {
+    background-color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 70px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.navbarHeader {
+    color: white;
+    font-size: 1.8em;
+    font-weight: bold;
+}
+
+.sidebar {
+    width: 250px;
+    padding: 1.5rem 1rem;
+    background-color: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    position: fixed;
+    top: 70px;
+    left: 0;
+    height: calc(100vh - 70px);
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.sidebar-btn {
+    background-color: transparent;
+    color: #4b5563;
+    padding: 0.75rem 1.25rem;  /* Increased horizontal padding */
+    margin: 0.25rem 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: none;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    width: calc(100% - 0.5rem);  /* Adjusted width accounting for margin */
+    text-align: left;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+    white-space: nowrap;  /* Prevent text wrapping */
+    overflow: hidden;     /* Hide overflow text */
+    text-overflow: ellipsis; /* Show ellipsis for overflow text */
+}
+.sidebar-btn:hover {
+    background-color: #f8fafc;
+    color: #4CAF50;
+    transform: translateX(5px);
+}
+
+.mainContent {
+    margin-left: 240px;
+    padding: 100px 40px;
+    flex: 1;
+    background-color: #fff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 800px;
+    margin-top: 70px;
+}
+
+h1 {
+    font-size: 2.4em;
+    margin-bottom: 20px;
+    color: #4CAF50;
+    text-align: center;
+    font-weight: bold;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 500px;
+}
+
+label {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+select,
+input[type="text"] {
+    padding: 12px;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 400px;
+    font-size: 1.1em;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+select:focus {
+    border-color: #66bb6a;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+
+.dangerBtn {
+    background-color: #f44336;
+}
+
+.dangerBtn:hover {
+    background-color: #d32f2f;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.customCategoryContainer {
+    margin-top: 30px;
+    width: 100%;
+    text-align: center;
+}
+
+.customCategoryHeader {
+    color: #4CAF50;
+    font-size: 1.8em;
+    margin-bottom: 20px;
+}
+
+.customCategoryContainer input {
+    margin-bottom: 15px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+    }
+
+    .mainContent {
+        margin-left: 0;
+        padding: 60px 20px;
+    }
+
+    select,
+    input[type="text"] {
+        width: 90%;
+    }
+
+    button {
+        width: 90%;
+    }
+}
+
+@media (max-width: 500px) {
+    h1 {
+        font-size: 1.8em;
+    }
+
+    input[type="text"] {
+        width: 80%;
+    }
+
+    button {
+        width: 80%;
+    }
+}
