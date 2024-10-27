@@ -1,36 +1,32 @@
+// Defines the Settings component, for application settings
+// Handles user input, updates application state, and interacts with the WebSocket service to manage settings and data synchronization.
 import { Component, useState, useRef, onWillStart, xml, onMounted } from "@odoo/owl";
 import { api } from "../controllers/api";
-import settingsStyles from '../styles/Settings.module.css';
+import settingsStyles from '../styles/scss/Settings.module.scss';
+import { websocketService } from "../services/socket";
 
 class Settings extends Component {
     async initWebSocket() {
-        return new Promise((resolve, reject) => {
-            this.webSocket.current = new WebSocket("ws://localhost:3000/ws/todos");
-    
-            this.webSocket.current.onopen = () => {
-                this.webSocket.current.send(JSON.stringify({ type: "fetchTodos" }));
-            };
-    
-            this.webSocket.current.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-    
-                if (data.type === "todos") {
-                    const validTodos = data.data.filter((todo) => todo && todo.title);
-                    this.state.todos = validTodos; // Update the state with valid todos
-                    resolve(validTodos); // Resolve the promise with valid todos
-                }
-            };
-    
-            this.webSocket.current.onerror = (error) => {
-                console.error("WebSocket error observed:", error);
-                reject(new Error("WebSocket error: " + error.message)); // Reject the promise in case of error
-            };
-    
-            this.webSocket.current.onclose = () => {
-                console.log("WebSocket connection closed. Attempting to reconnect...");
-                reject(new Error("WebSocket connection closed")); // Reject the promise on close
-            };
-        });
+        try {
+            this.state.isLoading = true;
+      
+            websocketService.subscribe("todos", (todos) => {
+              const validTodos = todos.filter((todo) => todo && todo.title);
+              this.state.todos = validTodos;
+              this.state.isLoading = false;
+            });
+      
+            websocketService.subscribe("todoUpdated", (updatedTodo) => {
+              this.state.todos = this.state.todos.map((todo) =>
+                todo.id === updatedTodo.id ? updatedTodo : todo
+              );
+            });
+      
+            await websocketService.sendMessage({ type: "fetchTodos" });
+          } catch (error) {
+            console.error("Error initializing WebSocket:", error);
+            this.state.isLoading = false;
+          }
     }
     
 
@@ -39,7 +35,8 @@ class Settings extends Component {
             customCategories: [],
             selectedCategory: "All Categories",
             customCategoryInput: "",
-            todos: [] // Make sure to initialize the todos state
+            selectedCategoryForDeletion: "",
+            todos: []
         });
 
         this.fileInputRef = useRef("fileInput");
@@ -100,7 +97,28 @@ class Settings extends Component {
         }
     }
     
-
+    handleDeleteCategory = async () => {
+        const categoryId = this.state.selectedCategoryForDeletion;
+        if (!categoryId) {
+            this.state.deletionWarning = true; 
+            return;
+        }
+        this.state.deletionWarning = false;
+        if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
+            try {
+                const response = await api.deleteCategory(categoryId);
+                if (response.ok) {
+                    alert("Category deleted successfully.");
+                    await this.loadCategoriesSettings(); 
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.error || "Failed to delete category.");
+                }
+            } catch (error) {
+                alert("Error deleting category: " + error.message);
+            }
+        }
+    };
     handleSaveCategory(ev) {
         ev.preventDefault();
         localStorage.setItem("selectedCategory", this.state.selectedCategory);
@@ -110,10 +128,11 @@ class Settings extends Component {
     async handleAddCustomCategory() {
         if (this.state.customCategoryInput.trim()) {
             try {
-                await this.saveCustomCategoryToDatabase(this.state.customCategoryInput);
-                this.state.customCategoryInput = "";
+                const categoryToAdd = this.state.customCategoryInput;
+                await this.saveCustomCategoryToDatabase(categoryToAdd);
+                this.state.customCategoryInput = "";  
                 await this.loadCategoriesSettings();
-                alert(`Custom category "${this.state.customCategoryInput}" added!`);
+                alert(`Custom category "${categoryToAdd}" added!`); 
             } catch (error) {
                 alert(`Error adding custom category: ${error.message}`);
             }
@@ -121,6 +140,7 @@ class Settings extends Component {
             alert("Please enter a custom category.");
         }
     }
+    
 
     handleRestore(ev) {
         const file = ev.target.files[0];
@@ -143,8 +163,7 @@ class Settings extends Component {
                 }
 
                 alert("Data restored successfully!");
-                // Optionally refresh the custom categories
-                await this.loadCategoriesSettings();
+                 await this.loadCategoriesSettings();
             } catch (error) {
                 alert(`Error restoring data: ${error.message}`);
             }
@@ -186,7 +205,7 @@ class Settings extends Component {
                 const response = await api.deleteAllCategories();
                 if (response.ok) {
                     alert("All custom categories deleted successfully.");
-                    await this.loadCategoriesSettings(); // Refresh categories
+                    await this.loadCategoriesSettings(); 
                 } else {
                     const errorData = await response.json();
                     alert(errorData.error || "Failed to delete custom categories.");
@@ -198,43 +217,66 @@ class Settings extends Component {
     }
 
     static template = xml`
-    <div>
-        <nav class="${settingsStyles.navbar}">
-            <h2 class="${settingsStyles.navbarTitle}">Todo App Settings</h2>
-        </nav>
-        <div class="${settingsStyles.sidebar}">
-            <button class="${settingsStyles.sidebarBtn}" t-on-click="handleMainClick">Home</button>
+   <div>
+    <nav class="${settingsStyles.navbar}">
+        <h2 class="${settingsStyles.navbarTitle}">Todo App Settings</h2>
+    </nav>
+
+    <div class="${settingsStyles.sidebar}">
+        <button class="${settingsStyles.sidebarBtn}" t-on-click="handleMainClick">Home</button>
+    </div>
+
+    <div class="${settingsStyles.mainContent}">
+        <h1 class="${settingsStyles.settingsHeader}">Settings</h1>
+
+        <form class="${settingsStyles.categoryForm}" t-on-submit="handleSaveCategory">
+            <label for="todo-category">Select Category To Sort By:</label>
+            <select class="${settingsStyles.categorySelect}" t-model="state.selectedCategory">
+                <option value="All Categories">All Categories</option>
+                <t t-foreach="state.customCategories" t-as="category" t-key="category.id">
+                    <option t-att-value="category.category_name" t-esc="category.category_name"/>
+                </t>
+                <t t-foreach="['Work', 'Personal', 'Other']" t-as="category" t-key="category">
+                    <option t-att-value="category" t-esc="category"/>
+                </t>
+            </select>
+            <button class="${settingsStyles.saveButton}" type="submit">Save Category</button>
+        </form>
+
+        <p>Selected Category: <span id="selected-category" t-esc="state.selectedCategory"/></p>
+
+        <div class="${settingsStyles.actionButtons}">
+            <button class="${settingsStyles.dangerBtn}" t-on-click="handleDeleteAllCategories">Delete All Categories</button>
+            <button class="${settingsStyles.dangerBtn}" t-on-click="handleDeleteAllTodos">Delete All Todos</button>
+            <button class="${settingsStyles.backupBtn}" t-on-click="handleBackup">Backup Todos</button>
+            <button class="${settingsStyles.restoreBtn}" t-on-click="() => this.fileInputRef.el.click()">Restore Data</button>
+            <input type="file" t-ref="fileInput" t-on-change="handleRestore" accept=".json" style="display: none;"/>
         </div>
-        <div class="${settingsStyles.mainContent}">
-            <h1 class="${settingsStyles.settingsHeader}">Settings</h1>
-            <form class="${settingsStyles.categoryForm}" t-on-submit="handleSaveCategory">
-                <label for="todo-category">Select Category To Sort By:</label>
-                <select class="${settingsStyles.categorySelect}" t-model="state.selectedCategory">
-                    <option value="All Categories">All Categories</option>
-                    <t t-foreach="state.customCategories" t-as="category" t-key="category.id">
-                        <option t-att-value="category.category_name" t-esc="category.category_name"/>
-                    </t>
-                    <t t-foreach="['Work', 'Personal', 'Other']" t-as="category" t-key="category">
-                        <option t-att-value="category" t-esc="category"/>
-                    </t>
-                </select>
-                <button class="${settingsStyles.saveButton}" type="submit">Save Category</button>
-            </form>
-            <p>Selected Category: <span id="selected-category" t-esc="state.selectedCategory"/></p>
-            <div class="${settingsStyles.actionButtons}">
-                <button class="${settingsStyles.dangerBtn}" t-on-click="handleDeleteAllCategories">Delete All Categories</button>
-                <button class="${settingsStyles.dangerBtn}" t-on-click="handleDeleteAllTodos">Delete All Todos</button>
-                <button class="${settingsStyles.backupBtn}" t-on-click="handleBackup">Backup Todos</button>
-                <button class="${settingsStyles.restoreBtn}" t-on-click="() => this.fileInputRef.el.click()">Restore Data</button>
-                <input type="file" t-ref="fileInput" t-on-change="handleRestore" accept=".json" style="display: none;"/>
-            </div>
-            <div class="${settingsStyles.customCategoryContainer}">
-                <h2 class="${settingsStyles.customCategoryHeader}">Add a Custom Category</h2>
-                <input class="${settingsStyles.customCategoryInput}" type="text" t-model="state.customCategoryInput" placeholder="Enter custom category"/>
-                <button class="${settingsStyles.addCustomCategoryBtn}" type="button" t-on-click="handleAddCustomCategory">Add Category</button>
-            </div>
+
+        <div class="${settingsStyles.customCategoryContainer}">
+            <h2 class="${settingsStyles.customCategoryHeader}">Add a Custom Category</h2>
+            <input class="${settingsStyles.customCategoryInput}" type="text" t-model="state.customCategoryInput" placeholder="Enter custom category"/>
+            <button class="${settingsStyles.addCustomCategoryBtn}" type="button" t-on-click="handleAddCustomCategory">Add Category</button>
+        </div>
+
+        <div class="${settingsStyles.deleteCategoryContainer}">
+            <h2 class="${settingsStyles.deleteCategoryHeader}">Delete a Custom Category</h2>
+            <label class="${settingsStyles.categoryLabel}" for="category-delete">Select Category to Delete:</label>
+            <select class="${settingsStyles.categorySelect}" t-model="state.selectedCategoryForDeletion">
+                <option value="">Select a category</option>
+                <t t-foreach="state.customCategories" t-as="category" t-key="category.id">
+                    <option t-att-value="category.id" t-esc="category.category_name"/>
+                </t>
+            </select>
+            <div class="${settingsStyles.buttonContainer}">
+              <button class="${settingsStyles.dangerBtn}" type="button" t-on-click="handleDeleteCategory">Delete Selected Category</button>
+            </div>            <t t-if="state.deletionWarning">
+                <p class="${settingsStyles.warningMessage}">Please select a category to delete.</p>
+            </t>
         </div>
     </div>
+</div>
+
     `;
 }
 

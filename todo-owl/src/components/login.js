@@ -1,6 +1,6 @@
 import { Component, useState, onWillStart, onWillUnmount, xml } from "@odoo/owl";
 import { api } from "../controllers/api";
-import styles from '../styles/Login.module.css';
+import styles from '../styles/scss/Login.module.scss';
 
 class Login extends Component {
     static template = xml`

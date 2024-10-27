@@ -1,5 +1,7 @@
-// api.js
-
+/**
+ * Handles all the API calls and such 
+ * also the websocket conncetion init in fetchTodo
+ */
 const API_BASE_URL = "http://localhost:3000";
 import { websocketService } from '../services/socket';
 
@@ -24,7 +26,12 @@ export const api = {
         fetch(`${API_BASE_URL}/auth/user`, { credentials: "include" }).then(
             handleResponse
         ),
-
+        deleteCategory: (categoryId) =>
+            fetch(`${API_BASE_URL}/categories/custom-categories/${categoryId}`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+            }).then(handleResponse),
     fetchCategories: () =>
         fetch(`${API_BASE_URL}/categories/custom-categories`, {
             credentials: "include",
@@ -44,8 +51,7 @@ export const api = {
             websocketService.disconnect();
         },
 
-    closeWebSocket: () => closeSocket(), // Call to close WebSocket
-
+    closeWebSocket: () => closeSocket(),  
     addTodo: (todoData) =>
         fetch(`${API_BASE_URL}/todo`, {
             method: "POST",
@@ -93,7 +99,10 @@ export const api = {
         fetch(`${API_BASE_URL}/auth/logout`, {
             method: "POST",
             credentials: "include",
-        }).then(handleResponse),
+        
+        },
+        websocketService.disconnect(),
+        ).then(handleResponse),
 
     login: (username, password) =>
         fetch(`${API_BASE_URL}/auth/login`, {
@@ -101,6 +110,7 @@ export const api = {
             headers: { "Content-Type": "application/json" },
             credentials: "include",
             body: JSON.stringify({ username, password }),
+            
         }).then(handleAuthResponse),
 
     register: (username, password) =>
